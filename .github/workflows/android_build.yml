@@ -1,0 +1,41 @@
+name: Build llama.cpp Android APK
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive # এটি অত্যন্ত জরুরি কারণ অ্যান্ড্রয়েড বিল্ডের জন্য সাব-মডিউল লাগে
+
+    - name: Set up Java 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Setup Android NDK
+      uses: nttld/setup-ndk@v1
+      with:
+        ndk-version: r26b # llama.cpp-এর জন্য লেটেস্ট NDK ভার্সন
+
+    - name: Grant Execute Permission for Gradlew
+      run: chmod +x examples/llama.android/gradlew
+
+    - name: Build Android APK
+      run: |
+        cd examples/llama.android
+        ./gradlew assembleDebug
+
+    - name: Upload APK Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: llama-android-debug-apk
+        path: examples/llama.android/app/build/outputs/apk/debug/*.apk
